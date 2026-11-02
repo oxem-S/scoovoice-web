@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScooVoice Web</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+  <header class="head">
+    <div class="logo">◆</div>
+    <div>
+      <h1>ScooVoice <span>Web</span></h1>
+      <p>Sprach- und Knopfsteuerung für den Ninebot – im Browser (Chrome / Edge / Android-Chrome, Web Bluetooth)</p>
+    </div>
+  </header>
+
+  <!-- Verbindung -->
+  <section class="card">
+    <div class="row statusrow">
+      <span id="statusDot" class="dot"></span>
+      <h2 id="statusText">Getrennt</h2>
+    </div>
+    <p id="keyInfo" class="muted">Kein Pairing-Key geladen.</p>
+    <div class="row wrap gap">
+      <button id="btnConnect" class="btn primary">🔍 Verbinden</button>
+      <button id="btnDisconnect" class="btn outline" disabled>⏹ Trennen</button>
+      <button id="btnImport" class="btn outline">📄 session.json im­port­ieren</button>
+      <button id="btnExportKey" class="btn ghost">Key exportieren</button>
+      <label class="inline muted">Seriennummer: <input id="serialInput" placeholder="1EF… (Key-Basis)"></label>
+    </div>
+    <p class="caption">Blekey wird pro Seriennummer im Browser (localStorage) gesichert. Fast-Re-Pair wie in der Android-App; ohne Key: innerhalb 25&nbsp;s der Power-Button am Scooter.</p>
+  </section>
+
+  <!-- Sprache -->
+  <section class="card">
+    <h2>Sprache</h2>
+    <div class="row wrap gap">
+      <button id="btnVoice" class="btn primary" disabled>🎙 Sprachsteuerung starten</button>
+      <label class="inline"><input type="checkbox" id="chkWake"> Wake-Wort nötig („Roller“/„Scooter“)</label>
+    </div>
+    <p id="voiceInfo" class="muted">Web Speech API: läuft in Chrome (Handy/Desktop). Hinweis: im Browser läuft die Erkennung über Google, nicht offline.</p>
+    <div class="readout">
+      <div id="voiceText" class="muted">Sprache: –</div>
+      <div id="actionText">Aktion: –</div>
+    </div>
+  </section>
+
+  <!-- PANIK -->
+  <section class="card panicCard">
+    <h2>Notfall</h2>
+    <button id="btnPanic" class="btn panic">🚨 PANIK: 22 km/h &amp; Null-Start aus</button>
+    <p class="caption">1. Druck = Werkszustand (wie Sprachbefehl „Reset“); die vorherigen Werte werden gemerkt. 2. Druck = genau diese Werte zurück. Wirkt auch während des Wheelie-Assistenten (stoppt diesen zuerst).</p>
+  </section>
+
+  <!-- Tempo -->
+  <section class="card">
+    <h2>Max-Tempo</h2>
+    <div id="speedText" class="bigline">Max-Speed (0x48): –</div>
+    <div class="row wrap gap knn" id="speedRow">
+      <!-- Zahlenknöpfe 10..35 -->
+    </div>
+    <div class="row wrap gap">
+      <button id="btnZero" class="btn outline">Zero-Start an (0x42 = 0)</button>
+      <button id="btnSong" class="btn outline">🎵 Song im Rhythmus piepen</button>
+      <select id="songSlot">
+        <option value="1">Song 1 – Vierer</option>
+        <option value="2">Song 2 – Kurz/Kurz/Lang</option>
+        <option value="3">Song 3 – SOS</option>
+        <option value="4">Song 4 – Herzschlag</option>
+        <option value="5">Song 5 – Marsch</option>
+        <option value="6">Song 6 – Rapid</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- Wheelie -->
+  <section class="card">
+    <h2>Wheelie-Assistent</h2>
+    <div id="tiltAngle" class="bigline angle">–</div>
+    <div id="tiltInfo" class="muted">Nicht kalibriert</div>
+    <div id="tiltStats" class="small">Boden – · Best – · Wheelies 0</div>
+
+    <div id="calibMessage" class="warn">Nicht kalibriert – bitte zuerst kalibrieren. Bis dahin sind Assist und Anti-Wheelie gesperrt.</div>
+    <progress id="calibProgress" max="100" value="0" style="display:none"></progress>
+
+    <div class="row wrap gap">
+      <button id="btnCalibrate" class="btn primary">Kalibrieren</button>
+      <button id="btnCalCancel" class="btn ghost" style="display:none">Abbrechen</button>
+      <button id="btnAssist" class="btn primary" disabled>Starten</button>
+    </div>
+
+    <div class="row wrap gap">
+      <div class="seg" id="modeGroup">
+        <button data-mode="0" class="segBtn checked">Wheelie-Assist</button>
+        <button data-mode="1" class="segBtn">Anti-Wheelie</button>
+      </div>
+    </div>
+
+    <label>Assist-Zielwinkel (Grad) <output id="outTarget">20</output></label>
+    <input type="range" id="sliderTarget" min="5" max="45" step="1" value="20">
+    <label>Wheelie-Tempo (km/h, 35 = aus) <output id="outWSpeed">35</output></label>
+    <input type="range" id="sliderWSpeed" min="10" max="35" step="1" value="35">
+    <label>Anti-Wheelie: Grenzwinkel (Grad) <output id="outAnti">12</output></label>
+    <input type="range" id="sliderAnti" min="5" max="35" step="1" value="12">
+    <label>Tempo-Bereich min (km/h) <output id="outMin">10</output></label>
+    <input type="range" id="sliderMin" min="10" max="35" step="1" value="10">
+    <label>Tempo-Bereich max (km/h) <output id="outMax">35</output></label>
+    <input type="range" id="sliderMax" min="10" max="35" step="1" value="35">
+    <label>Regler-Härte</label>
+    <div class="seg" id="presetGroup">
+      <button data-p="0" class="segBtn">Weich</button>
+      <button data-p="1" class="segBtn checked">Normal</button>
+      <button data-p="2" class="segBtn">Hart</button>
+    </div>
+    <label class="inline" style="margin-top:12px">Antworten vorlesen (TTS im Browser)
+      <input type="checkbox" id="chkTts" checked></label>
+    <label>Tempo-Quelle
+      <select id="speedSource">
+        <option value="1">Register 0x57 (Standard)</option>
+        <option value="2">Register 0x26</option>
+        <option value="0">Aus – nur Winkel regeln</option>
+      </select>
+    </label>
+    <label>Stärke (km/h je Grad Überschuss) <output id="outKp">1.5</output></label>
+    <input type="range" id="sliderKp" min="0.3" max="4" step="0.1" value="1.5">
+    <label>Totband (Grad) <output id="outDb">2</output></label>
+    <input type="range" id="sliderDb" min="1" max="5" step="0.5" value="2">
+    <label>Rampe nach oben (km/h pro s) <output id="outRamp">14</output></label>
+    <input type="range" id="sliderRamp" min="2" max="40" step="1" value="14">
+    <label>Mindest-Bremsabstand unter Tempo (km/h) <output id="outDrop">3</output></label>
+    <input type="range" id="sliderDrop" min="1" max="8" step="1" value="3">
+    <label>Kalibrier-Toleranz beim Halten (± Grad) <output id="outTol">3</output></label>
+    <input type="range" id="sliderTol" min="1" max="6" step="1" value="3">
+
+    <p class="caption">Der Assistent bremst über das km/h-Limit (Rekuperation): zu steil → Limit unter dein Tempo, im Band → knapp darüber, zu flach → weiche Rampe nach oben. Verliert der Browser Bluetooth, bleibt das letzte Limit stehen – es wird beim nächsten Verbinden wiederhergestellt (Failsafe).</p>
+    <p class="caption warnText">Nur auf Privatgelände, mit Helm und Protektoren. Der Browser ist kein Ersatz für die Android-App: Sensorteile (~60 Hz) und Web-Bluetooth-Timing sind tlw. träger.</p>
+  </section>
+
+  <!-- Protokoll -->
+  <section class="card">
+    <h2>Protokoll</h2>
+    <div id="log" class="log"></div>
+  </section>
+
+  <footer class="foot">
+    <button id="btnSelftest" class="btn ghost">Krypto-Selbsttest</button>
+    <span id="selftestResult" class="muted"></span>
+  </footer>
+</main>
+
+<input type="file" id="filePick" accept=".json,application/json" style="display:none">
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
