@@ -52,6 +52,7 @@ export class ScooterLink {
     this.motor = 0; // 0 = einzelne Writes ok, 1 = gechunkt (Adaptive-Modus)
     this.frameQueue = [];
     this.linkMutex = Promise.resolve();
+    this.disconnectHandler = null;
     this.nameHint = '';
   }
 
@@ -86,6 +87,7 @@ export class ScooterLink {
   stopLoop() {
     this.running = false;
     this.stopping = true;
+    this.unwatchDisconnect();
     try { this.server?.disconnect(); } catch { /* egal */ }
     this.server = null;
     this.connected = false;
@@ -158,11 +160,36 @@ export class ScooterLink {
     notify.addEventListener('characteristicvaluechanged', (ev) => {
       this.buffer.onFrameData(new Uint8Array(ev.target.value.buffer ?? ev.target.value));
     });
-    server.addEventListener('gattserverdisconnected', () => {
-      this.connected = false;
-      this.disconnectedWave?.();
-    });
+    this.watchDisconnect();
     this.onLog('[+] Notify aktiviert - Session-Aufbau startet');
+  }
+
+  /** 'gattserverdisconnected' kommt laut Web-Bluetooth-Spec am BluetoothDevice
+   *  an; BluetoothRemoteGATTServer ist in manchen Chrome-Builds (v. a. Android)
+   *  kein vollwertiger EventTarget - deshalb immer am Device hoeren, am Server
+   *  nur als Fallback. */
+  watchDisconnect() {
+    if (!this.disconnectHandler) {
+      this.disconnectHandler = () => {
+        this.connected = false;
+        this.disconnectedWave?.();
+      };
+    }
+    const dev = this.device;
+    if (dev && typeof dev.addEventListener === 'function') {
+      if (typeof dev.removeEventListener === 'function') {
+        dev.removeEventListener('gattserverdisconnected', this.disconnectHandler);
+      }
+      dev.addEventListener('gattserverdisconnected', this.disconnectHandler);
+      return;
+    }
+    if (this.server && typeof this.server.addEventListener === 'function') {
+      this.server.addEventListener('gattserverdisconnected', this.disconnectHandler);
+    }
+  }
+
+  unwatchDisconnect() {
+    try { this.device?.removeEventListener?.('gattserverdisconnected', this.disconnectHandler); } catch { /* egal */ }
   }
 
   waitDisconnected() {
@@ -332,6 +359,7 @@ export class ScooterLink {
   }
 
   async closeGatt() {
+    this.unwatchDisconnect();
     try { this.server?.disconnect(); } catch { /* egal */ }
     this.server = null;
     this.connected = false;
