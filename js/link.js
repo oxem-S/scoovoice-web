@@ -15,7 +15,7 @@
  * MTU lässt sich nicht anfragen -> Schreiben je Chunk 20 Bytes/5 ms bis der
  * Stack lange Writes nimmt (Aderptivmodus), Notify statt GATT-Callback.
  */
-import { Frame, NbCrypto, RxStream, SpeedMap, concat, decrypt, fromLatin1, fromHex, latin1, toHex } from './protocol.js';
+import { Frame, NbCrypto, RxStream, SpeedMap, concat, decrypt, fromLatin1, fromHex, latin1, toHex } from './protocol.js?v=2';
 
 const NORDIC_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const NUS_WRITE = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';

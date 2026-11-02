@@ -4,7 +4,7 @@
  * Pairing-Keys pro Seriennummer (wie SessionStore.kt), calibration.json-Import
  * (nur verifizierte Punkte), App-Einstellungen.
  */
-import { SpeedMap } from './protocol.js';
+import { SpeedMap } from './protocol.js?v=2';
 
 const KEY_STORE = 'scoovoice.keys';
 const CAL_STORE = 'scoovoice.calibration';

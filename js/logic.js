@@ -10,7 +10,7 @@
  *     (VoiceService.calibrationDisplayDeg)
  */
 
-import { SpeedMap } from './protocol.js';
+import { SpeedMap } from './protocol.js?v=2';
 
 const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 const toDeg = (rad) => (rad * 180) / Math.PI;

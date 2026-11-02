@@ -7,18 +7,21 @@
  * speechSynthesis statt Android-TTS.
  */
 
-import { ScooterLink } from './link.js';
+import { ScooterLink } from './link.js?v=2';
 import {
   SpeedMap, latin1, fromHex, toHex,
   aes128KeySchedule, aesEncryptBlock16, NbCrypto,
-} from './protocol.js';
-import { keyStore, importSessionJson, calibrationStore, prefs } from './store.js';
-import { TiltSensor } from './sensors.js';
+} from './protocol.js?v=2';
+import { keyStore, importSessionJson, calibrationStore, prefs } from './store.js?v=2';
+import { TiltSensor } from './sensors.js?v=2';
 import {
   Command, CommandController, SongBook,
   WheelieController, AntiWheelieController, WheelieTracker,
   TelemetryFilter, Calibration,
-} from './logic.js';
+} from './logic.js?v=2';
+
+/** Ausgelieferte Code-Version - wird im Start-Log und hinter dem Selbsttest angezeigt. */
+const BUILD = 'hotfix-gattserverdisconnected (0b7a433)';
 
 /* ------------------------------------------------------------------ Dom */
 const $ = (id) => document.getElementById(id);
@@ -1145,15 +1148,15 @@ async function runSelftest() {
 
     const fails = results.filter((x) => !x).length;
     if (fails === 0) {
-      dom.selftestResult.textContent = `✅ ${results.length}/${results.length} Tests bestanden`;
+      dom.selftestResult.textContent = `✅ ${results.length}/${results.length} Tests bestanden · Build ${BUILD}`;
       dom.selftestResult.style.color = '';
       log(`[test] alle ${results.length} Krypto-Tests bestanden (AES-ECB + NbCrypto + SpeedMap)`);
     } else {
-      dom.selftestResult.textContent = `❌ ${fails}/${results.length} fehl (Details im Protokoll)`;
+      dom.selftestResult.textContent = `❌ ${fails}/${results.length} fehl (Details im Protokoll) · Build ${BUILD}`;
       dom.selftestResult.style.color = 'var(--warn)';
     }
   } catch (e) {
-    dom.selftestResult.textContent = `❌ Fehler: ${e.message}`;
+    dom.selftestResult.textContent = `❌ Fehler: ${e.message} · Build ${BUILD}`;
     dom.selftestResult.style.color = 'var(--warn)';
     log(`[test] Ausnahmefehler: ${e.message}`);
   } finally {
@@ -1195,7 +1198,7 @@ function init() {
   reloadWheelieConfig();
   updateKeyInfo();
   dom.speedText.textContent = 'Max-Speed (0x48): –';
-  log('[start] ScooVoice Web bereit. Verbinden: Chrome/Edge, dann Power-Button beim Erst-Pairing drücken.');
+  log(`[start] ScooVoice Web bereit · Build ${BUILD}. Verbinden: Chrome/Edge, dann Power-Button beim Erst-Pairing drücken.`);
   if (!('bluetooth' in navigator)) {
     log('[!] Web Bluetooth fehlt in diesem Browser (Chrome/Edge/desktop bzw. Android-Chrome; iOS/Safari nein).');
     dom.btnConnect.disabled = true;
